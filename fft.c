@@ -11,6 +11,9 @@ void dft(double* data, double* amp, int N)
 	double sum_sqs = 0;
 	double phase[N];
 
+	
+	//printf("DFT Results:\n");
+
 	for (int k = 0; k<N; ++k) 
 	{
 		for (int n = 0; n<N; ++n)
@@ -23,11 +26,15 @@ void dft(double* data, double* amp, int N)
 
 		sum_sqs = real*real + imag*imag;
 
+		//printf("%f\n", real);
+		//printf("%f\n", imag);
+
 		amp[k] = sqrt(sum_sqs);
 		phase[k] = atan(imag/real);
 
 		real = 0; imag = 0;
 	}
+	printf("\n");
 }
 
 void fft(double* data, int N)
@@ -37,6 +44,19 @@ void fft(double* data, int N)
 	int s = 0;
 
 	double sorted_data[N];
+	double sd_real[N];
+	double sd_imag[N];
+	double top;
+	double bottom;
+	double angle;
+	double top_r;
+	double top_i;
+	double bottom_r;
+	double bottom_i;
+	double imag;
+	double real;
+	double bottom_r2;
+	double bottom_i2;
 
 	int rev = 0;
 
@@ -51,6 +71,7 @@ void fft(double* data, int N)
 		//printf("%d\n", order[n]);
 	}
 
+	/*
 	printf("ReOrdered Data:\n");
 	for (int n = 0; n<N; ++n)
 	{
@@ -58,6 +79,7 @@ void fft(double* data, int N)
 		printf("%f\n", sorted_data[n]);
 	}
 	printf("\n");
+	*/
 
 	while (s < (stages-1))
 	{
@@ -69,8 +91,8 @@ void fft(double* data, int N)
 			{
 				if ((n%2 == 0))
 				{
-					double top = sorted_data[n];
-					double bottom = sorted_data[n+1];
+					top = sorted_data[n];
+					bottom = sorted_data[n+1];
 		
 					sorted_data[n] = top + bottom;
 					sorted_data[n+1] = top - bottom;
@@ -79,12 +101,13 @@ void fft(double* data, int N)
 
 			s += 1;
 		}
+		
 		// perform intermediate stage butterflies 
 		else
 		{
 			int index = 0;
 			int max_index = s * 4;
-			int inc = ((N / 8) * 2) / s;
+			int inc = ((N / 8) * 2) * s;
 			int cycle = 0;
 			int cycle_total = inc;
 			int val = 0;
@@ -96,20 +119,27 @@ void fft(double* data, int N)
 
 				if (cycle == cycle_total)
 				{
-					/*
 					// compute the next stage and update the data array
-					for (int n=0; n<N; ++n)
+					for (int n=0; n<(N-inc); ++n)
 					{
 						top = sorted_data[n];
 						bottom = sorted_data[n+inc];
-						bottom_r = cos(2*M_PI*exp[n]/N);
-						bottom_i = -1 * sin(2*M_PI*exp[n]/N);
-					*/
+
+						angle = 2*M_PI*exp[n]/N;
+						printf("%d\n", exp[n]);
+						bottom_r = bottom * cos(angle);
+						bottom_i = -1 * bottom * sin(angle);
+						
+						sd_real[n] = top + bottom_r;	
+						sd_imag[n] = bottom_i;
+						sd_real[n+inc] = top - bottom_r;
+						sd_imag[n+inc] = -1 * bottom_i;
+					}
+
 					break;
 				}
 
-				//printf("%d\n", val);
-				//int exp[i] = val;
+				exp[i] = val;
 				i += 1;
 				val += inc;
 				index += 1;
@@ -123,12 +153,51 @@ void fft(double* data, int N)
 				}
 				
 			}
-			printf("\n");
-			printf("%d\n", s);
-			printf("\n");
+
 			s += 1;
+			printf("\n");
+			for (int n=0; n<N; ++n)
+			{
+				printf("%f\n", sd_real[n]);	
+				printf("%f\n", sd_imag[n]);	
+			}
+
+		}
+		
+		if (s == stages-1)
+		{
+			int inc = ((N / 8) * 2) * s;
+			for (int n=0; n<(N-inc); ++n)
+			{
+				top_r = sd_real[n];
+				top_i = sd_imag[n];
+				bottom_r = sd_real[n+inc];
+				bottom_i = sd_imag[n+inc];
+				
+				angle = 2*M_PI*n/N;
+				imag = -1 * sin(angle);
+				real = cos(angle);
+
+				bottom_r2 = (bottom_r * real) - (bottom_i * imag);
+				bottom_i2 = (bottom_r * imag) + (bottom_i * real);
+
+				sd_real[n] = top_r + bottom_r2;
+				sd_imag[n] = top_i + bottom_i2;
+				sd_real[n+inc] = top_r - bottom_r2;
+				sd_imag[n+inc] = top_i - bottom_i2; 
+			}
 		}
 	}
+
+	/*
+	printf("FFT Results:\n");
+
+	for (int n=0; n<N; ++n) 
+	{
+		printf("%f\n", sd_real[n]);
+		printf("%f\n", sd_imag[n]);
+	}
+	*/
 
 	// perform second stage butterfly 
 	// perform third stage butterfly
