@@ -13,7 +13,7 @@ void main()
 	double amp[N];
 
 	wave_gen(data, N);
-	dft(data, amp, N);
+	//dft(data, amp, N);
 	fft(data, N);
 
 	/*
