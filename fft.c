@@ -42,23 +42,33 @@ void fft(double* data, int N)
 	int order[N];
 	int stages = (N / 8) + 2;
 	int s = 0;
+	int rev = 0;
 
 	double sorted_data[N];
 	double sd_real[N];
 	double sd_imag[N];
+	double fft_amp[N];
+
 	double top;
-	double bottom;
-	double angle;
 	double top_r;
 	double top_i;
+	double bottom;
 	double bottom_r;
-	double bottom_i;
-	double imag;
-	double real;
 	double bottom_r2;
+	double bottom_i;
 	double bottom_i2;
+	double real;
+	double imag;
+	double angle;
 
-	int rev = 0;
+	for (int n=0; n<N; ++n)
+	{
+		order[n] = 0;
+		sorted_data[n] = 0;
+		sd_real[n] = 0;
+		sd_imag[n] = 0;
+		fft_amp[n] = 0;
+	}
 
 	// rearrange array based on bit reversed order concept
 	for (int n = 0; n<N; ++n)
@@ -73,7 +83,7 @@ void fft(double* data, int N)
 		printf("%d\n", order[n]);
 	}
 	*/
-
+	
 	printf("ReOrdered Data:\n");
 	for (int n = 0; n<N; ++n)
 	{
@@ -81,8 +91,7 @@ void fft(double* data, int N)
 		printf("%f\n", sorted_data[n]);
 	}
 	printf("\n");
-
-
+	
 	while (s < (stages-1))
 	{
 		// perform first stage butterfly
@@ -114,83 +123,60 @@ void fft(double* data, int N)
 		// perform intermediate stage butterflies 
 		else
 		{
-			int index = 0;
-			int max_index = s * 4;
-			int inc = ((N / 8) * 2) * s;
-			int cycle = 0;
-			int cycle_total = inc;
-			int val = 0;
-			int exp[N];
+			int inc;	
+			int exp_inc = (N / 8) * 2 / s;
 			int i = 0;
+
+			if (s == 1) { inc = s*2; }
+			else { int inc = inc * 2; } 
 
 			while (1)
 			{
+				// compute the next stage and update the data array
+				int n = 0;
+				int expo = 0;
+				int skip = 0;
 
-				if (cycle == cycle_total)
+				while (n < N)
 				{
-					// compute the next stage and update the data array
-					int n = 0;
-					int skip = 0;
-					while (n < N)
-					{
-						top = sorted_data[n];
-						bottom = sorted_data[n+inc];
+					top = sorted_data[n];
+					bottom = sorted_data[n+inc];
 
-						//printf("%d\n", exp[n]);
-						angle = 2*M_PI*exp[n]/N;
-						bottom_r = bottom * cos(angle);
-						bottom_i = -1 * bottom * sin(angle);
+					angle = 2*M_PI*expo/N;
+					bottom_r = bottom * cos(angle);
+					bottom_i = -1 * bottom * sin(angle);
 						
-						sd_real[n] = top + bottom_r;	
-						sd_imag[n] = bottom_i;
-						sd_real[n+inc] = top - bottom_r;
-						sd_imag[n+inc] = -1 * bottom_i;
+					sd_real[n] = top + bottom_r;	
+					sd_imag[n] = bottom_i;
+					sd_real[n+inc] = top - bottom_r;
+					sd_imag[n+inc] = -1 * bottom_i;
 
-						skip += 1;
+					skip += 1;
+					expo += exp_inc;
 
-						if (skip == inc) 
-						{ 
-							n += (inc+1); 
-							skip = 0;
-						}
-						else { n += 1; }
+					if (skip == inc)
+					{ 
+						n += inc + 1; 
+						skip = 0;
+						expo = 0;
 					}
-
-					break;
+					else { n += 1; }
 				}
 
-				exp[i] = val;
-				i += 1;
-				val += inc;
-				index += 1;
-			
-				if (index == max_index)
-				{
-					val = order[max_index * (cycle+1)];
-
-					cycle += 1;
-					index = 0;
-				}
-				
+				break;
 			}
 
 			s += 1;
-
-			/*
-			printf("\n");
-			for (int n=0; n<N; ++n)
-			{
-				printf("%f\n", sd_real[n]);	
-				printf("%f\n", sd_imag[n]);	
-			}
-			*/
-
 		}
 		
+		// perform the final stage butterfly
 		if (s == stages-1)
 		{
-			int inc = ((N / 8) * 2) * s;
-			for (int n=0; n<(N-inc); ++n)
+			int inc = ((s-1)*2) * 2;
+			int skip = 0;
+			int n = 0;
+
+			while (n<N)
 			{
 				top_r = sd_real[n];
 				top_i = sd_imag[n];
@@ -208,30 +194,31 @@ void fft(double* data, int N)
 				sd_imag[n] = top_i + bottom_i2;
 				sd_real[n+inc] = top_r - bottom_r2;
 				sd_imag[n+inc] = top_i - bottom_i2; 
+
+				skip += 1;
+
+				if (skip == inc)
+				{ 
+					n += (inc+1); 
+					skip = 0;
+				}
+				else { n += 1; }
+
 			}
+			
+			printf("FFT Results:\n");
 
 			for (int n=0; n<N; ++n)
 			{
-				printf("%f\n", sd_real[n]);	
-				printf("%f\n", sd_imag[n]);	
+				double temp = sd_real[n]*sd_real[n] + sd_imag[n]*sd_imag[n];
+				temp = sqrt(temp);
+
+				fft_amp[n] = temp;
+				printf("%f\n", fft_amp[n]);
 			}
 
 		}
 	}
-
-	/*
-	printf("FFT Results:\n");
-
-	for (int n=0; n<N; ++n) 
-	{
-		printf("%f\n", sd_real[n]);
-		printf("%f\n", sd_imag[n]);
-	}
-	*/
-
-	// perform second stage butterfly 
-	// perform third stage butterfly
-	
 }
 
 int reverse_bits(int num, int N)

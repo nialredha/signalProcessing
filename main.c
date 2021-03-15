@@ -13,7 +13,7 @@ void main()
 	double amp[N];
 
 	wave_gen(data, N);
-	//dft(data, amp, N);
+	dft(data, amp, N);
 	fft(data, N);
 
 	/*
@@ -24,14 +24,13 @@ void main()
 		printf("%d\n", rev);
 	}
 	*/
-
-	/*	
-	//dft(data, amp, N);
-
+	
+	printf("\nDFT Results:\n");
 	for (int i = 0; i<N; ++i) 
 	{
-		printf("%0.6f\n", data[i]);
-		//printf("%0.6f\n", amp[i]);
+		//printf("%0.6f\n", data[i]);
+		printf("%f\n", amp[i]);
 	}
-	*/
+
+	
 }
