@@ -1,0 +1,139 @@
+/*
+*
+* Parse/read a wav file
+*
+* Code taken from:
+* http://truelogic.org/wordpress/2015/09/04/parsing-a-wav-file-in-c/
+*
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "wav.h"
+
+FILE *ptr;
+char *filename;
+struct HEADER header;
+
+unsigned char fbb[4];	// 4 byte buffer
+unsigned char tbb[2];	// 2 byte buffer
+
+int main(int argc, char **argv)
+{
+	filename = (char*) malloc(sizeof(char) * 1024);
+	if (filename == NULL)
+	{
+		printf("ERROR in malloc\n");
+		exit(1); // indicating abnormal termination of program
+	}
+
+	// get file path
+	char cwd[1024];
+
+	if (getcwd(cwd, sizeof(cwd)) != NULL)
+	{
+		strcpy(filename, cwd);
+
+		// get filename from command line
+		if (argc < 2)	// executable and .wav file
+		{
+			printf("Please Specify WAV file\n");
+			return 0;
+		}
+
+		// add filename to the dir
+		strcat(filename, "/");
+		strcat(filename, argv[1]);
+		printf("\n%s\n", filename);
+	} 
+
+	// open file
+	printf("\nOpening file...\n");
+	ptr = fopen(filename, "rb");	// "rb" used to open non_text files
+	if (ptr == NULL)
+	{
+		printf("ERROR in opening file\n");
+		exit(1);	// inidicating abnormal termination of program
+	}
+
+	// read wav header
+	int read = 0; // total number of elements successfull read
+	
+	read = fread(header.riff, sizeof(header.riff), 1, ptr);
+	printf("\n(1-4): %s\n", header.riff);
+
+	read = fread(fbb, sizeof(fbb), 1, ptr);
+
+	// convert little endian to big endian 4 byte int 
+	// https://chortle.ccsu.edu/AssemblyTutorial/Chapter-15/ass15_3.html
+	// take least sig byte and put in front of second least sig byte and repeat
+	header.size_of_file = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+	printf("(5-8) Overall Size: %u bytes\n", header.size_of_file);
+	
+	read = fread(header.wave, sizeof(header.wave), 1, ptr);
+	printf("(9-12) Wave Marker: %s\n", header.wave);
+
+	read = fread(header.fmt_mrkr, sizeof(header.fmt_mrkr), 1, ptr);
+	printf("(13-16) Fmt Marker: %s\n", header.fmt_mrkr);
+
+	read = fread(fbb, sizeof(fbb), 1, ptr);
+	header.fmt_size = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+	//printf("(17-20) Fmt Size: 
+
+	read = fread(tbb, sizeof(tbb), 1, ptr);
+	header.fmt_type = tbb[0] | tbb[1]<<8;	
+	
+	char fmt_name[10] = "";
+
+	if (header.fmt_type == 1) { strcpy(fmt_name, "PCM"); }
+	else if (header.fmt_type = 6) { strcpy(fmt_name, "A-law"); }
+	else { strcpy(fmt_name, "Mu-law"); }
+
+	read = fread(tbb, sizeof(tbb), 1, ptr);
+	header.chan_num = tbb[0] | tbb[1]<<8;
+
+	read = fread(fbb, sizeof(fbb), 1, ptr);
+	header.sample_rate = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+
+	read = fread(fbb, sizeof(fbb), 1, ptr);
+	header.byte_rate = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+
+	read = fread(tbb, sizeof(tbb), 1, ptr);
+	header.bytes_per_sample = tbb[0] | tbb[1]<<8;
+
+	read = fread(tbb, sizeof(tbb), 1, ptr);
+	header.bits_per_sample = tbb[0] | tbb[1]<<8 | tbb[2]<<16 | tbb[3]<<24;
+
+	read = fread(header.data_mrkr, sizeof(header.data_mrkr), 1, ptr);
+
+	read = fread(fbb, sizeof(fbb), 1, ptr);
+	header.data_size = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+
+	printf("Number of Channels = %d\n", header.chan_num);
+
+	/*
+	// calculate number of samples
+	long sample_num = (8 * header.data_size) / 
+					  (header.chan_num * header.bits_per_sample);
+	*/
+	
+	// calculate size of each sample in bytes
+	long sample_size = (header.chan_num * header.bits_per_sample) / 8;
+
+	// calculate duration of file
+	float duration = (float) header.size_of_file * header.byte_rate;
+	printf("Approx. Duration in seconds = %f\n", duration);
+
+	// close the file
+	printf("Closing file...\n");
+	fclose(ptr);
+
+	// free dynamic storage
+	free(filename);
+
+	return 0;
+}
+
