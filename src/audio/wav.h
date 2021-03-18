@@ -6,6 +6,8 @@ struct HEADER
 	unsigned	char	riff[4];
 	unsigned	int		size_of_file;
 	unsigned	char	wave[4];
+	unsigned	char	jnk_mrkr[4];
+	unsigned	int		size_of_jnk;
 	unsigned	char	fmt_mrkr[4];
 	unsigned	int		fmt_size;
 	unsigned	int		fmt_type;

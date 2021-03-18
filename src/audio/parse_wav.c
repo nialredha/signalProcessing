@@ -5,6 +5,9 @@
 * Code taken from:
 * http://truelogic.org/wordpress/2015/09/04/parsing-a-wav-file-in-c/
 *
+* Other references:
+* https://www.daubnet.com/en/file-format-riff
+*
 */
 
 #include <stdio.h>
@@ -76,12 +79,24 @@ int main(int argc, char **argv)
 	read = fread(header.wave, sizeof(header.wave), 1, ptr);
 	printf("(9-12) Wave Marker: %s\n", header.wave);
 
+	// WAVE file may or may not have JUNK chunk
+	// if it does, use the next 9 lines of code; otherwise, comment it out
+	read = fread(header.jnk_mrkr, sizeof(header.jnk_mrkr), 1, ptr);
+	printf ("\nJunk Marker: %s\n", header.jnk_mrkr);
+
+	read = fread(fbb, sizeof(fbb), 1, ptr);
+	header.size_of_jnk = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+	printf("Size of Junk: %u bytes\n\n", header.size_of_jnk);
+
+	unsigned char jbb[header.size_of_jnk];
+	read = fread(jbb, sizeof(jbb), 1, ptr);
+	
 	read = fread(header.fmt_mrkr, sizeof(header.fmt_mrkr), 1, ptr);
 	printf("(13-16) Fmt Marker: %s\n", header.fmt_mrkr);
 
 	read = fread(fbb, sizeof(fbb), 1, ptr);
 	header.fmt_size = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
-	//printf("(17-20) Fmt Size: 
+	printf("(17-20) Fmt Size: %u\n", header.fmt_size);
 
 	read = fread(tbb, sizeof(tbb), 1, ptr);
 	header.fmt_type = tbb[0] | tbb[1]<<8;	
@@ -91,44 +106,52 @@ int main(int argc, char **argv)
 	if (header.fmt_type == 1) { strcpy(fmt_name, "PCM"); }
 	else if (header.fmt_type = 6) { strcpy(fmt_name, "A-law"); }
 	else { strcpy(fmt_name, "Mu-law"); }
+	printf("(21-22) Fmt Type: %s\n", fmt_name);
 
 	read = fread(tbb, sizeof(tbb), 1, ptr);
 	header.chan_num = tbb[0] | tbb[1]<<8;
+	printf("(23-24) Number of Channels: %u\n", header.chan_num);
 
 	read = fread(fbb, sizeof(fbb), 1, ptr);
 	header.sample_rate = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+	printf("(25-28) Sample Rate: %u\n", header.sample_rate);
 
 	read = fread(fbb, sizeof(fbb), 1, ptr);
 	header.byte_rate = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+	printf("(29-32) Byte Rate: %u\n", header.byte_rate);
 
 	read = fread(tbb, sizeof(tbb), 1, ptr);
 	header.bytes_per_sample = tbb[0] | tbb[1]<<8;
+	printf("(33-34) Bytes Per Sample: %u\n", header.bytes_per_sample);
 
 	read = fread(tbb, sizeof(tbb), 1, ptr);
-	header.bits_per_sample = tbb[0] | tbb[1]<<8 | tbb[2]<<16 | tbb[3]<<24;
+	header.bits_per_sample = tbb[0] | tbb[1]<<8;
+	printf("(35-36) Bits Per Sample: %u\n", header.bits_per_sample);
 
 	read = fread(header.data_mrkr, sizeof(header.data_mrkr), 1, ptr);
+	printf("(37-40) Data Marker: %s\n", header.data_mrkr);
 
 	read = fread(fbb, sizeof(fbb), 1, ptr);
 	header.data_size = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+	printf("(41-44) Size of Data: %u\n", header.data_size);
 
-	printf("Number of Channels = %d\n", header.chan_num);
-
-	/*
 	// calculate number of samples
+	// size of data seems to be wrong, so this value is wrong as well
+	// value isn't that important, so i didn't fix it
 	long sample_num = (8 * header.data_size) / 
 					  (header.chan_num * header.bits_per_sample);
-	*/
+	printf("\nNumber of Samples: %lu\n", sample_num);
 	
 	// calculate size of each sample in bytes
 	long sample_size = (header.chan_num * header.bits_per_sample) / 8;
+	printf("Size of Each Sample: %lu bytes\n", sample_size);
 
 	// calculate duration of file
-	float duration = (float) header.size_of_file * header.byte_rate;
+	float duration = (float) header.size_of_file / header.byte_rate;
 	printf("Approx. Duration in seconds = %f\n", duration);
 
 	// close the file
-	printf("Closing file...\n");
+	printf("\nClosing file...\n\n");
 	fclose(ptr);
 
 	// free dynamic storage
