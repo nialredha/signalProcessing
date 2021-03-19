@@ -3,7 +3,8 @@
 
 #define N 44100 
 
-void main() {
+void main()
+{ 
 	// Create a 20 ms audio buffer (assuming Fs = 44.1 kHz)
 	int16_t buf[N] = {0}; // buffer
 	int n;                // buffer index
