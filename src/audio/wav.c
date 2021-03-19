@@ -2,11 +2,12 @@
 *
 * Parse/read a wav file
 *
-* Code taken from:
+* Code implemented based on:
 * http://truelogic.org/wordpress/2015/09/04/parsing-a-wav-file-in-c/
 *
 * Other references:
 * https://www.daubnet.com/en/file-format-riff
+* http://soundfile.sapp.org/doc/WaveFormat/
 *
 */
 
@@ -80,19 +81,35 @@ int main(int argc, char **argv)
 	printf("(9-12) Wave Marker: %s\n", header.wave);
 
 	// WAVE file may or may not have JUNK chunk
-	// if it does, use the next 9 lines of code; otherwise, comment it out
-	read = fread(header.jnk_mrkr, sizeof(header.jnk_mrkr), 1, ptr);
-	printf ("\nJunk Marker: %s\n", header.jnk_mrkr);
-
-	read = fread(fbb, sizeof(fbb), 1, ptr);
-	header.size_of_jnk = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
-	printf("Size of Junk: %u bytes\n\n", header.size_of_jnk);
-
-	unsigned char jbb[header.size_of_jnk];
-	read = fread(jbb, sizeof(jbb), 1, ptr);
-	
+	// so check for JUNK chunk before moving to FMT chunk
 	read = fread(header.fmt_mrkr, sizeof(header.fmt_mrkr), 1, ptr);
-	printf("(13-16) Fmt Marker: %s\n", header.fmt_mrkr);
+
+	if (strcmp(header.fmt_mrkr, "JUNK") == 0)
+	{
+		strcpy(header.jnk_mrkr, header.fmt_mrkr);
+		printf ("\nJunk Marker: %s\n", header.jnk_mrkr);
+
+		read = fread(fbb, sizeof(fbb), 1, ptr);
+		header.size_of_jnk = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
+		printf("Size of Junk: %u bytes\n\n", header.size_of_jnk);
+
+		unsigned char jbb[header.size_of_jnk];
+		read = fread(jbb, sizeof(jbb), 1, ptr);
+
+		read = fread(header.fmt_mrkr, sizeof(header.fmt_mrkr), 1, ptr);
+		printf("(13-16) Fmt Marker: %s\n", header.fmt_mrkr);
+
+	}
+	else 
+	{
+		strcpy(header.jnk_mrkr, "NONE");
+		printf ("\nJunk Marker: %s\n", header.jnk_mrkr);
+
+		header.size_of_jnk = 0;
+		printf("Size of Junk: %u bytes\n\n", header.size_of_jnk);
+
+		printf("(13-16) Fmt Marker: %s\n", header.fmt_mrkr);
+	}	
 
 	read = fread(fbb, sizeof(fbb), 1, ptr);
 	header.fmt_size = fbb[0] | fbb[1]<<8 | fbb[2]<<16 | fbb[3]<<24;
@@ -156,6 +173,8 @@ int main(int argc, char **argv)
 
 	// free dynamic storage
 	free(filename);
+
+	// read wav file data
 
 	return 0;
 }
