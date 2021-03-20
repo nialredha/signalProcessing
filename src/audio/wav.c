@@ -175,6 +175,46 @@ int main(int argc, char **argv)
 	free(filename);
 
 	// read wav file data
+	if (header.fmt_type == 1) // PCM meaning no compression
+	{
+		printf("Dump Uncompressed Data? (y/n):\n");
+		char ans = "n";
+		scanf("%c", &ans);
+		if (c == "Y" || c == "y")
+		{
+			char data_buf[sample_size];
+			int is_size_correct = 1; // YES 
+
+			// make sure sample size is completely divisible by # of channels
+			int remainder = sample_size % header.chan_num;
+			if (remainder != 0)
+			{
+				printf("Error in sample size"); 
+				is_size_correct = 0; // NO
+			}
+
+			if (is_size_correct == 0)
+			{
+				long lower_limit = 0l; // sets all bits to zero for long format
+				long upper_limit = 0l;
+				switch (header.bits_per_sample)
+				{
+					case 8:
+						lower_limit = -128;
+						upper_limit = 127; // bit for the sign (why take +?)
+						break;
+					case 16:
+						lower_limit = -32768;
+						upper_limit = 32767;
+						break;
+					case 32:
+						lower_limit = -2147483648;
+				}
+						upper_limit = 2147483647;
+						break;
+			}
+		}
+	}
 
 	return 0;
 }
