@@ -213,6 +213,12 @@ int main(int argc, char **argv)
 						upper_limit = 2147483647;
 						break;
 			}
+
+			read = fread(data_buf, sizeof(data_buf), 1, ptr);
+			
+			if (read == 1)
+			{
+
 		}
 	}
 
