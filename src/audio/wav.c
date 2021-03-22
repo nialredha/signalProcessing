@@ -167,6 +167,10 @@ int main(int argc, char **argv)
 	float duration = (float) header.size_of_file / header.byte_rate;
 	printf("Approx. Duration in seconds = %f\n", duration);
 
+	// Print the sample values in the buffer to a CSV file
+	FILE *csvfile;
+	csvfile = fopen("samples.csv", "w");
+
 	// read wav file data
 	if (header.fmt_type == 1) // PCM meaning no compression
 	{
@@ -240,7 +244,9 @@ int main(int argc, char **argv)
 								channel_data -= 128; // shifting to signed
 							}
 							index += bytes_per_chan;
+
 							printf("%d ", channel_data);
+							fprintf(csvfile, "%d", channel_data);
 	
 							if ((channel_data < lower_limit) || 
 								(channel_data > upper_limit))
@@ -249,9 +255,11 @@ int main(int argc, char **argv)
 							}
 	
 							printf(" | ");
+							fprintf(csvfile, " | ");
 						}
 	
 						printf("\n");
+						fprintf(csvfile, "\n");
 					}
 					else
 					{
@@ -266,6 +274,7 @@ int main(int argc, char **argv)
 	// close the file
 	printf("\nClosing file...\n\n");
 	fclose(ptr);
+	fclose(csvfile);	
 
 	// free dynamic storage
 	free(filename);
