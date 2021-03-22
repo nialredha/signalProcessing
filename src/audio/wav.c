@@ -167,25 +167,19 @@ int main(int argc, char **argv)
 	float duration = (float) header.size_of_file / header.byte_rate;
 	printf("Approx. Duration in seconds = %f\n", duration);
 
-	// close the file
-	printf("\nClosing file...\n\n");
-	fclose(ptr);
-
-	// free dynamic storage
-	free(filename);
-
 	// read wav file data
 	if (header.fmt_type == 1) // PCM meaning no compression
 	{
-		printf("Dump Uncompressed Data? (y/n):\n");
-		char ans = "n";
+		char ans = 'n';
+		printf("Dump Uncompressed Data? (y/n): ");
 		scanf("%c", &ans);
-		if (c == "Y" || c == "y")
+		if ((ans == 'Y') || (ans == 'y'))
 		{
 			char data_buf[sample_size];
 			int is_size_correct = 1; // YES 
 
 			// make sure sample size is completely divisible by # of channels
+			int bytes_per_chan = sample_size / header.chan_num;
 			int remainder = sample_size % header.chan_num;
 			if (remainder != 0)
 			{
@@ -193,10 +187,11 @@ int main(int argc, char **argv)
 				is_size_correct = 0; // NO
 			}
 
-			if (is_size_correct == 0)
+			if (is_size_correct == 1)
 			{
 				long lower_limit = 0l; // sets all bits to zero for long format
 				long upper_limit = 0l;
+
 				switch (header.bits_per_sample)
 				{
 					case 8:
@@ -209,19 +204,71 @@ int main(int argc, char **argv)
 						break;
 					case 32:
 						lower_limit = -2147483648;
-				}
 						upper_limit = 2147483647;
 						break;
+				}
+
+				for (int i=0; i<sample_num; ++i)
+				{
+					read = fread(data_buf, sizeof(data_buf), 1, ptr);
+				
+					if (read == 1)
+					{
+						unsigned int channel = 0;
+						int channel_data = 0;
+						int index = 0;
+		
+						for (channel = 0; channel < header.chan_num; ++channel)
+						{
+							printf("CH %d: ", channel+1);
+							if (bytes_per_chan == 4)
+							{
+								channel_data = (data_buf[index] & 0x00ff) | 
+											   ((data_buf[index + 1] & 0x00ff) << 8) | 
+											   ((data_buf[index + 2] & 0x00ff) << 16) |
+											   data_buf[index + 3] << 24;
+							}
+							else if (bytes_per_chan == 2)
+							{
+								channel_data = (data_buf[index] & 0x00ff) | 
+											   data_buf[index + 1] << 8;
+							}
+							else if (bytes_per_chan == 1)
+							{
+								// 8-bit wave data is unsigned
+								channel_data = data_buf[index];
+								channel_data -= 128; // shifting to signed
+							}
+							index += bytes_per_chan;
+							printf("%d ", channel_data);
+	
+							if ((channel_data < lower_limit) || 
+								(channel_data > upper_limit))
+							{
+								printf("**Value out of range");
+							}
+	
+							printf(" | ");
+						}
+	
+						printf("\n");
+					}
+					else
+					{
+						printf("Error reading data: %d bytes\n", read);
+						break;
+					}
+				}
 			}
-
-			read = fread(data_buf, sizeof(data_buf), 1, ptr);
-			
-			if (read == 1)
-			{
-
 		}
 	}
 
+	// close the file
+	printf("\nClosing file...\n\n");
+	fclose(ptr);
+
+	// free dynamic storage
+	free(filename);
+
 	return 0;
 }
-
