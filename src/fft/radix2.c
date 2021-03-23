@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "fft.h"
+#include "radix2.h"
 
 void dft(double* data, double* amp, int N) 
 {
