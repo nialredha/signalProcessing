@@ -224,7 +224,7 @@ int main(int argc, char **argv)
 		
 						for (channel = 0; channel < header.chan_num; ++channel)
 						{
-							printf("CH %d: ", channel+1);
+							//printf("CH %d: ", channel+1);
 							if (bytes_per_chan == 4)
 							{
 								channel_data = (data_buf[index] & 0x00ff) | 
@@ -245,7 +245,7 @@ int main(int argc, char **argv)
 							}
 							index += bytes_per_chan;
 
-							printf("%d ", channel_data);
+							//printf("%d", channel_data);
 							fprintf(csvfile, "%d", channel_data);
 	
 							if ((channel_data < lower_limit) || 
@@ -254,11 +254,11 @@ int main(int argc, char **argv)
 								printf("**Value out of range");
 							}
 	
-							printf(" | ");
-							fprintf(csvfile, " | ");
+							//printf(" | ");
+							fprintf(csvfile, ",");
 						}
 	
-						printf("\n");
+						//printf("\n");
 						fprintf(csvfile, "\n");
 					}
 					else
