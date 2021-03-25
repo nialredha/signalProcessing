@@ -130,7 +130,7 @@ void fft(double* data, int N)
 			int i = 0;
 
 			if (s == 1) { inc = s*2; }
-			else { int inc = inc * 2; } 
+			else { inc = inc * 2; } 
 
 			while (1)
 			{
@@ -141,28 +141,61 @@ void fft(double* data, int N)
 
 				while (n < N)
 				{
-					top = sorted_data[n];
-					bottom = sorted_data[n+inc];
+					if (s == 1)
+					{
+						top = sorted_data[n];
+						bottom = sorted_data[n+inc];
 
-					angle = 2*M_PI*expo/N;
-					bottom_r = bottom * cos(angle);
-					bottom_i = -1 * bottom * sin(angle);
-						
-					sd_real[n] = top + bottom_r;	
-					sd_imag[n] = bottom_i;
-					sd_real[n+inc] = top - bottom_r;
-					sd_imag[n+inc] = -1 * bottom_i;
-
-					skip += 1;
-					expo += exp_inc;
-
-					if (skip == inc)
-					{ 
-						n += inc + 1; 
-						skip = 0;
-						expo = 0;
+						angle = 2*M_PI*expo/N;
+						bottom_r = bottom * cos(angle);
+						bottom_i = -1 * bottom * sin(angle);
+							
+						sd_real[n] = top + bottom_r;	
+						sd_imag[n] = bottom_i;
+						sd_real[n+inc] = top - bottom_r;
+						sd_imag[n+inc] = -1 * bottom_i;
+	
+						skip += 1;
+						expo += exp_inc;
+	
+						if (skip == inc)
+						{ 
+							n += inc + 1; 
+							skip = 0;
+							expo = 0;
+						}
+						else { n += 1; }
 					}
-					else { n += 1; }
+					else
+					{
+						top_r = sd_real[n];
+						top_i = sd_imag[n];
+						bottom_r = sd_real[n+inc];
+						bottom_i = sd_imag[n+inc];
+				
+						angle = 2*M_PI*expo/N;
+						imag = -1 * sin(angle);
+						real = cos(angle);
+
+						bottom_r2 = (bottom_r * real) - (bottom_i * imag);
+						bottom_i2 = (bottom_r * imag) + (bottom_i * real);
+
+						sd_real[n] = top_r + bottom_r2;
+						sd_imag[n] = top_i + bottom_i2;
+						sd_real[n+inc] = top_r - bottom_r2;
+						sd_imag[n+inc] = top_i - bottom_i2; 
+	
+						skip += 1;
+						expo += exp_inc;
+
+						if (skip == inc)
+						{ 
+							n += (inc+1); 
+							skip = 0;
+							expo = 0;
+						}
+						else { n += 1; }
+					}
 				}
 
 				break;
@@ -177,7 +210,7 @@ void fft(double* data, int N)
 			int inc = ((s-1)*2) * 2;
 			int skip = 0;
 			int n = 0;
-
+	
 			while (n<N)
 			{
 				top_r = sd_real[n];
@@ -196,7 +229,7 @@ void fft(double* data, int N)
 				sd_imag[n] = top_i + bottom_i2;
 				sd_real[n+inc] = top_r - bottom_r2;
 				sd_imag[n+inc] = top_i - bottom_i2; 
-
+	
 				skip += 1;
 
 				if (skip == inc)
@@ -205,9 +238,7 @@ void fft(double* data, int N)
 					skip = 0;
 				}
 				else { n += 1; }
-
 			}
-			
 			
 			printf("FFT Results:\n");
 
@@ -219,7 +250,6 @@ void fft(double* data, int N)
 				fft_amp[n] = temp;
 				printf("%f\n", fft_amp[n]);
 			}
-		
 		}
 	}
 }

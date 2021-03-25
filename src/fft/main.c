@@ -6,7 +6,7 @@
 
 void main() 
 {
-	int N = 16;	// radix-2 algorithm requires N be a power of 2
+	int N = 1024;	// radix-2 algorithm requires N be a power of 2
 
 	double data[N]; 
 	double amp[N];
