@@ -86,13 +86,13 @@ void fft(double* data, int N)
 	}
 	*/
 	
-	printf("ReOrdered Data:\n");
+	//printf("ReOrdered Data:\n");
 	for (int n = 0; n<N; ++n)
 	{
 		sorted_data[n] = data[order[n]];
-		printf("%f\n", sorted_data[n]);
+		//printf("%f\n", sorted_data[n]);
 	}
-	printf("\n");
+	//printf("\n");
 	
 	while (s < (stages-1))
 	{
@@ -288,12 +288,12 @@ void wave_gen(double *data, int N)
 	double w = 2*M_PI*(freq/s_freq);	// angular frequency in sample space
 
 	// "acquire" the data
-	printf("Acquired Data:\n");
+	//printf("Acquired Data:\n");
 	for (int n = 0; n<N; ++n)
 	{
 		data[n] = sin(w*time*n);	
-		printf("%f\n", data[n]);
+		//printf("%f\n", data[n]);
 	}
-	printf("\n");
+	//printf("\n");
 }
 
