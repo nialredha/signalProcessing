@@ -29,20 +29,21 @@ void dft(double* data, double* amp, int N)
 		real = 0; imag = 0;
 	}
 
-
+	/*
 	printf("\nDFT Results:\n");
 	for (int i = 0; i<N; ++i) 
 	{
 		printf("%f\n", amp[i]);
 	}
 	printf("\n");
+	*/
 	
 }
 
-void fft(double* data, int N)
+void fft(double* data, int N, int stages)
 {
 	int order[N];
-	int stages = (N / 8) + 2;
+	//int stages = (N / 8) + 2;
 	int s = 0;
 	int rev = 0;
 
@@ -207,7 +208,7 @@ void fft(double* data, int N)
 		// perform the final stage butterfly
 		if (s == stages-1)
 		{
-			int inc = ((s-1)*2) * 2;
+			int inc = (N / 8) * 4;//((s-1)*2) * 2;
 			int skip = 0;
 			int n = 0;
 	
@@ -229,7 +230,7 @@ void fft(double* data, int N)
 				sd_imag[n] = top_i + bottom_i2;
 				sd_real[n+inc] = top_r - bottom_r2;
 				sd_imag[n+inc] = top_i - bottom_i2; 
-	
+
 				skip += 1;
 
 				if (skip == inc)
