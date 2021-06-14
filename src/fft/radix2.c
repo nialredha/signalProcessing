@@ -80,12 +80,10 @@ void fft(double* data, int N, int stages)
 		order[n] = rev;
 	}
 
-	/*
 	for (int n = 0; n<N; ++n)
 	{
 		printf("%d\n", order[n]);
 	}
-	*/
 	
 	//printf("ReOrdered Data:\n");
 	for (int n = 0; n<N; ++n)
@@ -253,6 +251,7 @@ void fft(double* data, int N, int stages)
 			}
 		}
 	}
+	
 }
 
 int reverse_bits(int num, int N)
@@ -263,7 +262,19 @@ int reverse_bits(int num, int N)
 
 	int rev = 0;
 	int count = 0;
-	int max_count = (N / 8) + 2;
+	int log_N = N;
+	int max_count = 0;
+
+	while (log_N > 0)
+	{
+		log_N >>= 1;
+		//printf("%d\n", log_N);
+
+		if (log_N != 0)
+		{
+			max_count += 1;
+		}
+	}
 
 	while (count < max_count)
 	{

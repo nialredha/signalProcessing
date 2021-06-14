@@ -7,7 +7,7 @@
 
 void main() 
 {
-	int N = 32;	// radix-2 algorithm requires N be a power of 2
+	int N = 64;	// radix-2 algorithm requires N be a power of 2
 
 	// determine stages necessary
 	int log_N = N;
