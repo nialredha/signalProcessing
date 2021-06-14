@@ -50,6 +50,16 @@ void fft(double* data, int N)
 	double sorted_data[N];
 	double sorted_data_i[N];
 	int rev = 0;
+	int log_N = N;
+
+	while (log_N > 0)
+	{
+		log_N >>= 1;
+		if (log_N != 0)
+		{
+			NUMBER_OF_STAGES += 1;
+		}
+	}
 
 	for (int n=0; n<N; ++n)
 	{
@@ -200,6 +210,7 @@ void wave_gen(double *data, int N)
 	//printf("\n");
 }
 
+/*
 void main() 
 {
 	int N = 32768;	// radix-2 algorithm requires N be a power of 2
@@ -234,3 +245,4 @@ void main()
 	cpu_time_used = ((double) (stop - start)) /	CLOCKS_PER_SEC;
 	printf("DFT Computation Time: %f\n", cpu_time_used);
 }
+*/

@@ -1,33 +1,54 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <math.h>
 #include <time.h>
 
+#include "wav.h"
 #include "radix2.h"
 
-void main() 
+unsigned char fbb[4];	// 4 byte buffer
+unsigned char tbb[2];	// 2 byte buffer
+
+int main(int argc, char **argv)
 {
-	int N = 64;	// radix-2 algorithm requires N be a power of 2
+	char *filename = (char*)malloc(sizeof(char)*1024);
 
-	// determine stages necessary
-	int log_N = N;
-	int stages = 0;
-
-	while (log_N > 0)
+	// FIND FILE PATH FOR WAV FILE SPECIFIED 
+	if (filename == NULL)
 	{
-		log_N >>= 1;
-		//printf("%d\n", log_N);
-
-		if (log_N != 0)
-		{
-			stages += 1;
-		}
+		printf("ERROR in malloc\n");
+		exit(1); // indicating abnormal termination of program
 	}
 
-	//printf("%d\n", stages);
+	// get file path
+	char cwd[1024];
 
+	if (getcwd(cwd, sizeof(cwd)) != NULL)
+	{
+		strcpy(filename, cwd);
+		
+		// get filename from command line
+		if (argc < 2)
+		{
+			printf("Please Specify WAV file\n");
+			return 0;
+		}
+
+		// add filename to the dir
+		strcat(filename, "/");
+		strcat(filename, argv[1]);
+		printf("Input Signal: \n%s\n", filename);
+	}
+
+	FILE *file = open_wav(filename);
+	int *ch_data = read_wav(file);
+	close_wav(file);
+	
+
+	int N = 32768;	// radix-2 algorithm requires N be a power of 2
 	double data[N]; 
-	double amp[N];
 
 	clock_t start, stop;
 	double cpu_time_used;
@@ -35,14 +56,16 @@ void main()
 	wave_gen(data, N);
 
 	start = clock();
-	fft(data, N, stages);
+	fft(data, N);
 	stop = clock();
 	cpu_time_used = ((double) (stop - start)) / CLOCKS_PER_SEC;
 	printf("FFT Computation Time: %f\n", cpu_time_used);
 
+	/*
 	start = clock();
 	dft(data, amp, N);
 	stop = clock();
 	cpu_time_used = ((double) (stop - start)) /	CLOCKS_PER_SEC;
 	printf("DFT Computation Time: %f\n", cpu_time_used);
+*/
 }
