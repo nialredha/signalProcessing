@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 	close_wav(file);
 	
 
-	int N = 32768;	// radix-2 algorithm requires N be a power of 2
+	int N = 262144;	// radix-2 algorithm requires N be a power of 2
 	double data[N]; 
 
 	clock_t start, stop;

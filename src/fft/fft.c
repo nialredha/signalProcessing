@@ -157,7 +157,8 @@ void fft(double* data, int N)
 		}
 		*/
 	}
-/*
+
+	/*
 	for (int n=0; n<N; ++n)
 	{
 		double temp = sorted_data[n]*sorted_data[n] + 
@@ -166,6 +167,20 @@ void fft(double* data, int N)
 		printf("%f\n", temp);
 	}
 	*/
+
+	FILE *file;
+
+	file = fopen("../data/FFT_data.csv", "w+");
+	fprintf(file, "Time, Raw Data, Transformed Data\n");
+
+	for (int n=0; n<N; ++n)
+	{
+		double temp = sorted_data[n]*sorted_data[n] +
+					  sorted_data_i[n]*sorted_data_i[n];
+		temp = sqrt(temp);
+
+		fprintf(file, "%d, %lf, %lf\n", n, data[n], temp);
+	}
 }
 
 int reverse_bits(int num, int N)
@@ -194,7 +209,7 @@ int reverse_bits(int num, int N)
 
 void wave_gen(double *data, int N)
 {
-	double freq = 1.0;		// cycles per second
+	double freq = 8.0;		// cycles per second
 	int s_freq = N;
 	double time = 1.0;		// seconds
 
@@ -204,7 +219,7 @@ void wave_gen(double *data, int N)
 	//printf("Acquired Data:\n");
 	for (int n = 0; n<N; ++n)
 	{
-		data[n] = sin(w*time*n);	
+		data[n] = sin(w*time*n) + 0.5*sin(w*time*n/2);	
 		//printf("%f\n", data[n]);
 	}
 	//printf("\n");
