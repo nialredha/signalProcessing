@@ -1,2 +1,2 @@
 # signalProcessing
-processing varied signals using common algorithms to create visuals and sounds. 
+Writing DSP algorithms to understand them.
