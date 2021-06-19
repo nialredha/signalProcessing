@@ -9,6 +9,8 @@
 #define E(x) (x>>23) & ((1<<8) - 1) // Next 8 bits is ecponent 
 #define M(x) (x & ((1<<23) - 1)) // Next 23 bits is mantissa 
 
+void add();
+void multiply();
 
 void float_point_rep(int x) 
 {
