@@ -1,2 +1,2 @@
 # signalProcessing
-Writing DSP algorithms to understand them.
+Writing DSP algorithms and other things to understand them.
