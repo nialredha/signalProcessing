@@ -24,12 +24,12 @@ void dft(double* data, double* amp, int N)
 			imag += data[n] * sin(angle);
 		}
 
-/*
+		/*
 		sum_sqs = real*real + imag*imag;
-
 		amp[k] = sqrt(sum_sqs);
 		phase[k] = atan(imag/real);
-*/
+		*/
+
 		real = 0; imag = 0;
 	}
 
@@ -97,8 +97,6 @@ void fft(double* data, int N)
 		{
 			// top + (bottom * W^k)
 			// top - (bottom * W^k)
-			//printf("%d\n", k);
-
 			
 			double top = sorted_data[n];
 			double top_i = sorted_data_i[n];
@@ -106,18 +104,7 @@ void fft(double* data, int N)
 							sorted_data_i[n+inc] * sin(const_exp*k);
 			double bottom_i = sorted_data_i[n+inc] * cos(const_exp*k) - 
 							  sorted_data[n+inc] * sin(const_exp*k);
-/*
-			if (s==1)
-			{
-				//printf("real = %f\n", cos(const_exp*2));
-				printf("inc = %d\n", n+inc);
-				printf("bot = %lf\n", bottom);
-				printf("bot_i = %lf\n", bottom_i);
-				printf("k = %d\n", k);
-			}				  
-			printf("\n");
-			*/
-
+		
 			sorted_data[n] = top + bottom;
 			sorted_data[n+inc] = top - bottom; 
 			sorted_data_i[n] = top_i + bottom_i;
@@ -138,24 +125,9 @@ void fft(double* data, int N)
 			}
 		}
 
-		inc = inc * 2; // this signifies the end of a stage 
+		inc = inc * 2; 
 		k_step = N/(2*inc);
 		n = 0;
-/*
-		if (s==0)
-		{
-			for (int i=0; i<N; ++i)
-			{
-				printf("%lf\n", sorted_data[i]);
-			}
-			printf("\n");
-			for (int i=0; i<N; ++i)
-			{
-				printf("%lf\n", sorted_data_i[i]);
-			}
-			printf("\n");
-		}
-		*/
 	}
 
 	/*
@@ -168,6 +140,7 @@ void fft(double* data, int N)
 	}
 	*/
 
+	// Write transformed data to CSV
 	FILE *file;
 
 	file = fopen("../data/FFT_data.csv", "w+");
@@ -224,40 +197,3 @@ void wave_gen(double *data, int N)
 	}
 	//printf("\n");
 }
-
-/*
-void main() 
-{
-	int N = 32768;	// radix-2 algorithm requires N be a power of 2
-	int log_N = N;
-
-	clock_t start, stop;
-	double cpu_time_used;
-
-	while (log_N > 0)
-	{
-		log_N >>= 1;
-		if (log_N != 0)
-		{
-			NUMBER_OF_STAGES += 1;
-		}
-	}
-
-	double data[N]; 
-	double amp[N];
-
-	wave_gen(data, N);
-
-	start = clock();
-	fft(data, N);
-	stop = clock();
-	cpu_time_used = ((double) (stop - start)) / CLOCKS_PER_SEC;
-	printf("FFT Computation Time: %f\n", cpu_time_used);
-
-	start = clock();
-	dft(data, amp, N);
-	stop = clock();
-	cpu_time_used = ((double) (stop - start)) /	CLOCKS_PER_SEC;
-	printf("DFT Computation Time: %f\n", cpu_time_used);
-}
-*/

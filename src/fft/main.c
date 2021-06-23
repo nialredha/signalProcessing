@@ -13,6 +13,7 @@ unsigned char tbb[2];	// 2 byte buffer
 
 int main(int argc, char **argv)
 {
+	// Reading from WAV file 
 	char *filename = (char*)malloc(sizeof(char)*1024);
 
 	// FIND FILE PATH FOR WAV FILE SPECIFIED 
@@ -46,7 +47,7 @@ int main(int argc, char **argv)
 	int *ch_data = read_wav(file);
 	close_wav(file);
 	
-
+	// FFT 
 	int N = 262144;	// radix-2 algorithm requires N be a power of 2
 	double data[N]; 
 
@@ -67,5 +68,5 @@ int main(int argc, char **argv)
 	stop = clock();
 	cpu_time_used = ((double) (stop - start)) /	CLOCKS_PER_SEC;
 	printf("DFT Computation Time: %f\n", cpu_time_used);
-*/
+	*/
 }
