@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #include "radix2.h"
+
+int NUMBER_OF_STAGES = 0;
 
 void dft(double* data, double* amp, int N) 
 {
@@ -21,11 +24,12 @@ void dft(double* data, double* amp, int N)
 			imag += data[n] * sin(angle);
 		}
 
+/*
 		sum_sqs = real*real + imag*imag;
 
 		amp[k] = sqrt(sum_sqs);
 		phase[k] = atan(imag/real);
-
+*/
 		real = 0; imag = 0;
 	}
 
@@ -40,40 +44,30 @@ void dft(double* data, double* amp, int N)
 	
 }
 
-void fft(double* data, int N, int stages)
+void fft(double* data, int N)
 {
 	int order[N];
-	//int stages = (N / 8) + 2;
-	int s = 0;
-	int rev = 0;
-
 	double sorted_data[N];
-	double sd_real[N];
-	double sd_imag[N];
-	double fft_amp[N];
+	double sorted_data_i[N];
+	int rev = 0;
+	int log_N = N;
 
-	double top;
-	double top_r;
-	double top_i;
-	double bottom;
-	double bottom_r;
-	double bottom_r2;
-	double bottom_i;
-	double bottom_i2;
-	double real;
-	double imag;
-	double angle;
+	while (log_N > 0)
+	{
+		log_N >>= 1;
+		if (log_N != 0)
+		{
+			NUMBER_OF_STAGES += 1;
+		}
+	}
 
 	for (int n=0; n<N; ++n)
 	{
 		order[n] = 0;
 		sorted_data[n] = 0;
-		sd_real[n] = 0;
-		sd_imag[n] = 0;
-		fft_amp[n] = 0;
+		sorted_data_i[n] = 0;
 	}
 
-	// rearrange array based on bit reversed order concept
 	for (int n = 0; n<N; ++n)
 	{
 		rev = reverse_bits(n, N);
@@ -82,176 +76,111 @@ void fft(double* data, int N, int stages)
 
 	for (int n = 0; n<N; ++n)
 	{
-		printf("%d\n", order[n]);
-	}
-	
-	//printf("ReOrdered Data:\n");
-	for (int n = 0; n<N; ++n)
-	{
 		sorted_data[n] = data[order[n]];
-		//printf("%f\n", sorted_data[n]);
 	}
-	//printf("\n");
-	
-	while (s < (stages-1))
+
+	// INTIALIZATION 
+	int n = 0;
+	int inc = 1;
+	int k = 0;				// index for frequency data 
+	int k_step = 0;
+	int count = 0;
+
+	double const_exp = 2.0*M_PI/N;
+
+	for (int s=0; s<NUMBER_OF_STAGES; ++s)
 	{
-		// perform first stage butterfly
-		if (s == 0)
+		// THE MAIN BUTTERFLY LOOP
+		//printf("Stage: %d\n", s);
+
+		while (n<N)
 		{
-			// calculate 2 sample DFTs (first stage butterfly)
-			for (int n=0; n<N; ++n)
-			{
-				if ((n%2 == 0))
-				{
-					top = sorted_data[n];
-					bottom = sorted_data[n+1];
-		
-					sorted_data[n] = top + bottom;
-					sorted_data[n+1] = top - bottom;
-				}
-			}
+			// top + (bottom * W^k)
+			// top - (bottom * W^k)
+			//printf("%d\n", k);
 
-			s += 1;
-
-			/*
-			for (int n=0; n<N; ++n)
-			{
-				printf("%f\n", sorted_data[n]);
-			}
-			*/
-		}
-		
-		// perform intermediate stage butterflies 
-		else
-		{
-			int inc;	
-			int exp_inc = (N / 8) * 2 / s;
-			int i = 0;
-
-			if (s == 1) { inc = s*2; }
-			else { inc = inc * 2; } 
-
-			while (1)
-			{
-				// compute the next stage and update the data array
-				int n = 0;
-				int expo = 0;
-				int skip = 0;
-
-				while (n < N)
-				{
-					if (s == 1)
-					{
-						top = sorted_data[n];
-						bottom = sorted_data[n+inc];
-
-						angle = 2*M_PI*expo/N;
-						bottom_r = bottom * cos(angle);
-						bottom_i = -1 * bottom * sin(angle);
-							
-						sd_real[n] = top + bottom_r;	
-						sd_imag[n] = bottom_i;
-						sd_real[n+inc] = top - bottom_r;
-						sd_imag[n+inc] = -1 * bottom_i;
-	
-						skip += 1;
-						expo += exp_inc;
-	
-						if (skip == inc)
-						{ 
-							n += inc + 1; 
-							skip = 0;
-							expo = 0;
-						}
-						else { n += 1; }
-					}
-					else
-					{
-						top_r = sd_real[n];
-						top_i = sd_imag[n];
-						bottom_r = sd_real[n+inc];
-						bottom_i = sd_imag[n+inc];
-				
-						angle = 2*M_PI*expo/N;
-						imag = -1 * sin(angle);
-						real = cos(angle);
-
-						bottom_r2 = (bottom_r * real) - (bottom_i * imag);
-						bottom_i2 = (bottom_r * imag) + (bottom_i * real);
-
-						sd_real[n] = top_r + bottom_r2;
-						sd_imag[n] = top_i + bottom_i2;
-						sd_real[n+inc] = top_r - bottom_r2;
-						sd_imag[n+inc] = top_i - bottom_i2; 
-	
-						skip += 1;
-						expo += exp_inc;
-
-						if (skip == inc)
-						{ 
-							n += (inc+1); 
-							skip = 0;
-							expo = 0;
-						}
-						else { n += 1; }
-					}
-				}
-
-				break;
-			}
-
-			s += 1;
-		}
-		
-		// perform the final stage butterfly
-		if (s == stages-1)
-		{
-			int inc = (N / 8) * 4;//((s-1)*2) * 2;
-			int skip = 0;
-			int n = 0;
-	
-			while (n<N)
-			{
-				top_r = sd_real[n];
-				top_i = sd_imag[n];
-				bottom_r = sd_real[n+inc];
-				bottom_i = sd_imag[n+inc];
-				
-				angle = 2*M_PI*n/N;
-				imag = -1 * sin(angle);
-				real = cos(angle);
-
-				bottom_r2 = (bottom_r * real) - (bottom_i * imag);
-				bottom_i2 = (bottom_r * imag) + (bottom_i * real);
-
-				sd_real[n] = top_r + bottom_r2;
-				sd_imag[n] = top_i + bottom_i2;
-				sd_real[n+inc] = top_r - bottom_r2;
-				sd_imag[n+inc] = top_i - bottom_i2; 
-
-				skip += 1;
-
-				if (skip == inc)
-				{ 
-					n += (inc+1); 
-					skip = 0;
-				}
-				else { n += 1; }
-			}
 			
-			printf("FFT Results:\n");
-
-			for (int n=0; n<N; ++n)
+			double top = sorted_data[n];
+			double top_i = sorted_data_i[n];
+			double bottom = sorted_data[n+inc] * cos(const_exp*k) + 
+							sorted_data_i[n+inc] * sin(const_exp*k);
+			double bottom_i = sorted_data_i[n+inc] * cos(const_exp*k) - 
+							  sorted_data[n+inc] * sin(const_exp*k);
+/*
+			if (s==1)
 			{
-				double temp = sd_real[n]*sd_real[n] + sd_imag[n]*sd_imag[n];
-				temp = sqrt(temp);
+				//printf("real = %f\n", cos(const_exp*2));
+				printf("inc = %d\n", n+inc);
+				printf("bot = %lf\n", bottom);
+				printf("bot_i = %lf\n", bottom_i);
+				printf("k = %d\n", k);
+			}				  
+			printf("\n");
+			*/
 
-				fft_amp[n] = temp;
-				printf("%f\n", fft_amp[n]);
+			sorted_data[n] = top + bottom;
+			sorted_data[n+inc] = top - bottom; 
+			sorted_data_i[n] = top_i + bottom_i;
+			sorted_data_i[n+inc] = top_i - bottom_i;
+
+			k += k_step; 
+			count += 1;
+
+			if (count == inc)
+			{
+				n += (inc +1);
+				count = 0;
+				k = 0;
+			}
+			else 
+			{
+				n+=1;
 			}
 		}
+
+		inc = inc * 2; // this signifies the end of a stage 
+		k_step = N/(2*inc);
+		n = 0;
+/*
+		if (s==0)
+		{
+			for (int i=0; i<N; ++i)
+			{
+				printf("%lf\n", sorted_data[i]);
+			}
+			printf("\n");
+			for (int i=0; i<N; ++i)
+			{
+				printf("%lf\n", sorted_data_i[i]);
+			}
+			printf("\n");
+		}
+		*/
 	}
-	
+
+	/*
+	for (int n=0; n<N; ++n)
+	{
+		double temp = sorted_data[n]*sorted_data[n] + 
+					  sorted_data_i[n]*sorted_data_i[n];
+		temp = sqrt(temp);
+		printf("%f\n", temp);
+	}
+	*/
+
+	FILE *file;
+
+	file = fopen("../data/FFT_data.csv", "w+");
+	fprintf(file, "Time, Raw Data, Transformed Data\n");
+
+	for (int n=0; n<N; ++n)
+	{
+		double temp = sorted_data[n]*sorted_data[n] +
+					  sorted_data_i[n]*sorted_data_i[n];
+		temp = sqrt(temp);
+
+		fprintf(file, "%d, %lf, %lf\n", n, data[n], temp);
+	}
 }
 
 int reverse_bits(int num, int N)
@@ -262,19 +191,7 @@ int reverse_bits(int num, int N)
 
 	int rev = 0;
 	int count = 0;
-	int log_N = N;
-	int max_count = 0;
-
-	while (log_N > 0)
-	{
-		log_N >>= 1;
-		//printf("%d\n", log_N);
-
-		if (log_N != 0)
-		{
-			max_count += 1;
-		}
-	}
+	int max_count = NUMBER_OF_STAGES;
 
 	while (count < max_count)
 	{
@@ -292,9 +209,8 @@ int reverse_bits(int num, int N)
 
 void wave_gen(double *data, int N)
 {
-	double freq = 1.0;		// cycles per second
+	double freq = 8.0;		// cycles per second
 	int s_freq = N;
-	//double s_freq = 8.0;	// sample per second
 	double time = 1.0;		// seconds
 
 	double w = 2*M_PI*(freq/s_freq);	// angular frequency in sample space
@@ -303,9 +219,45 @@ void wave_gen(double *data, int N)
 	//printf("Acquired Data:\n");
 	for (int n = 0; n<N; ++n)
 	{
-		data[n] = sin(w*time*n);	
+		data[n] = sin(w*time*n) + 0.5*sin(w*time*n/2);	
 		//printf("%f\n", data[n]);
 	}
 	//printf("\n");
 }
 
+/*
+void main() 
+{
+	int N = 32768;	// radix-2 algorithm requires N be a power of 2
+	int log_N = N;
+
+	clock_t start, stop;
+	double cpu_time_used;
+
+	while (log_N > 0)
+	{
+		log_N >>= 1;
+		if (log_N != 0)
+		{
+			NUMBER_OF_STAGES += 1;
+		}
+	}
+
+	double data[N]; 
+	double amp[N];
+
+	wave_gen(data, N);
+
+	start = clock();
+	fft(data, N);
+	stop = clock();
+	cpu_time_used = ((double) (stop - start)) / CLOCKS_PER_SEC;
+	printf("FFT Computation Time: %f\n", cpu_time_used);
+
+	start = clock();
+	dft(data, amp, N);
+	stop = clock();
+	cpu_time_used = ((double) (stop - start)) /	CLOCKS_PER_SEC;
+	printf("DFT Computation Time: %f\n", cpu_time_used);
+}
+*/
